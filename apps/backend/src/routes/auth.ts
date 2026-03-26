@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { login, getChallenge } from '@/controllers/authController'
 import { validate } from '@/middleware/validate'
-import { loginSchema } from '@/schemas/authSchemas'
+import { loginSchema, challengeSchema } from '@/schemas/authSchemas'
 
 const router = Router()
 
@@ -10,7 +10,7 @@ const router = Router()
  * @desc    Get a challenge/nonce for signing
  * @access  Public
  */
-router.get('/challenge', getChallenge)
+router.get('/challenge', validate(challengeSchema), getChallenge)
 
 /**
  * @route   POST /api/auth/login
