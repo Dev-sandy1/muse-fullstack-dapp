@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import type React from 'react'
 import * as StellarSdk from '@stellar/stellar-sdk'
-import { ErrorHandler, AppError } from '@/utils/errorHandler'
+import { ErrorHandler} from '@/utils/errorHandler'
 import { StellarAccount, StellarTransaction } from '@/types'
 
 export interface FreighterWalletState {

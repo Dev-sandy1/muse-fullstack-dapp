@@ -24,11 +24,7 @@ function App() {
           <Route path="/" element={<SearchTest />} />
           <Route path="/explore" element={<SearchTest />} />
           <Route path="/artwork/:id" element={<ArtworkPage />} />
-          <Route path="/profile" element={
-            <div className="flex items-center justify-center p-20 text-secondary-500">
-              Profile Page (Coming Soon)
-            </div>
-          } />
+          <Route path="/profile" element={<ProfilePage/>} />
           <Route path="/mint" element={
             <div className="flex items-center justify-center p-20 text-secondary-500">
               Mint Page (Coming Soon)
