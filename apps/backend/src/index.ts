@@ -12,6 +12,7 @@ import { notFound } from '@/middleware/notFound'
 import authRoutes from '@/routes/auth'
 import artworkRoutes from '@/routes/artwork'
 import userRoutes from '@/routes/user'
+import searchRoutes from '@/routes/search'
 import aiRoutes from '@/routes/ai'
 import metadataRoutes from '@/routes/metadata'
 import cacheRoutes from '@/routes/cache'
@@ -116,6 +117,7 @@ export function createApp() {
   app.use('/api/auth', authRoutes)
   app.use('/api/artworks', artworkRoutes)
   app.use('/api/users', userRoutes)
+  app.use('/api/search', searchRoutes)
   app.use('/api/ai', aiRoutes)
   app.use('/api/metadata', metadataRoutes)
   app.use('/api/cache', cacheRoutes)
