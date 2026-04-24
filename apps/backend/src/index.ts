@@ -22,6 +22,7 @@ import imageOptimizerRoutes from '@/routes/imageOptimizer'
 import favoriteRoutes from '@/routes/favorites'
 import apiKeyRoutes from '@/routes/apiKeys'
 import jobRoutes from '@/routes/jobs'
+import notificationRoutes from '@/routes/notifications'
 import transactionRoutes from '@/routes/transactions'
 import analyticsRoutes from '@/routes/analytics'
 import fileUploadRoutes from '@/routes/fileUpload'
@@ -132,6 +133,7 @@ export function createApp() {
   app.use('/api/favorites', favoriteRoutes)
   app.use('/api/keys', apiKeyRoutes)
   app.use('/api/jobs', jobRoutes)
+  app.use('/api/notifications', notificationRoutes)
   app.use('/api/transactions', transactionRoutes)
   app.use('/api/analytics', analyticsRoutes)
   app.use('/api/upload', fileUploadRoutes)
