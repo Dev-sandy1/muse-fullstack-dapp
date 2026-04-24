@@ -30,6 +30,7 @@ import healthService from '@/services/healthService'
 import cacheService from '@/services/cacheService'
 import { jobQueueService } from '@/services/jobQueueService'
 import { createLogger } from '@/utils/logger'
+import { websocketService } from '@/services/websocketService'
 import logsRoute from "./routes/logs";
 
 dotenv.config()
@@ -158,10 +159,20 @@ export async function startServer() {
     }
   }
 
-  return app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`)
     logger.info(`Cache stats: ${JSON.stringify(cacheService.getCacheStats())}`)
   })
+
+  // Initialize WebSocket service
+  try {
+    websocketService.initialize(server)
+    logger.info('WebSocket service initialized')
+  } catch (error) {
+    logger.error('Failed to initialize WebSocket service:', error)
+  }
+
+  return server
 }
 
 if (process.env.NODE_ENV !== 'test') {
@@ -178,6 +189,12 @@ async function shutdown(signal: string) {
     await jobQueueService.shutdown()
   } catch (error) {
     logger.warn('Job queue shutdown encountered an error:', error)
+  }
+
+  try {
+    websocketService.shutdown()
+  } catch (error) {
+    logger.warn('WebSocket service shutdown encountered an error:', error)
   }
 
   try {
