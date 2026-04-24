@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { useArtworks, type Artwork, type ArtworksFilters } from '@/services/artworkService'
 import { ArtworkGrid } from '@/components/ArtworkGrid'
 import { Search, Filter } from 'lucide-react'
+import { PageLoading, LoadingCard } from '@/components/ui/Loading'
+import { useOperationLoading } from '@/contexts/LoadingContext'
 
 export function ExplorePage() {
   const [filters, setFilters] = useState<ArtworksFilters>({})
   const [searchTerm, setSearchTerm] = useState('')
+  const { isLoading: searchLoading, startLoading: startSearchLoading, stopLoading: stopSearchLoading } = useOperationLoading('search')
 
   const {
     data,
@@ -26,8 +29,30 @@ export function ExplorePage() {
     setSearchTerm('')
   }
   
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (searchTerm.trim()) {
+      startSearchLoading('Searching artworks...', 'dots')
+      try {
+        // Simulate search API call
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        setFilters({ ...filters, search: searchTerm })
+      } finally {
+        stopSearchLoading()
+      }
+    }
+  }
+
+  // Show loading state while searching
+  if (searchLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mobile-section pb-2">
+          <h1 className="heading-mobile mb-6">Explore Artworks</h1>
+        </div>
+        <PageLoading message="Searching artworks..." />
+      </div>
+    )
   }
 
   return (
@@ -45,12 +70,13 @@ export function ExplorePage() {
                 className="input pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={searchLoading}
               />
             </div>
-            <button type="submit" className="btn-primary px-4 hidden sm:block">
-              Search
+            <button type="submit" className="btn-primary px-4 hidden sm:block" disabled={searchLoading}>
+              {searchLoading ? 'Searching...' : 'Search'}
             </button>
-            <button type="button" className="btn-outline px-3 sm:hidden" aria-label="Filters">
+            <button type="button" className="btn-outline px-3 sm:hidden" aria-label="Filters" disabled={searchLoading}>
               <Filter className="h-4 w-4" />
             </button>
           </form>
@@ -59,7 +85,11 @@ export function ExplorePage() {
             {['All', 'Trending', 'New', 'Photography', '3D Render'].map((category) => (
               <button
                 key={category}
-                onClick={() => setFilters(category === 'All' ? {} : { category })}
+                onClick={() => {
+                  setFilters(category === 'All' ? {} : { category })
+                  setSearchTerm('')
+                }}
+                disabled={searchLoading}
                 className={`btn-outline whitespace-nowrap px-4 py-1.5 rounded-full text-sm ${
                   (filters.category === category || (!filters.category && category === 'All'))
                     ? 'bg-secondary-900 text-white border-secondary-900'
@@ -74,18 +104,22 @@ export function ExplorePage() {
       </div>
 
       <div className="mobile-section pt-0">
-        <ArtworkGrid
-          artworks={artworks}
-          isLoading={isLoading}
-          hasNextPage={!!hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadMore={() => {
-            if (hasNextPage) fetchNextPage()
-          }}
-          onPurchase={handlePurchase}
-          onClearFilters={handleClearFilters}
-          hasFilters={Object.keys(filters).length > 0}
-        />
+        {isLoading && !artworks.length ? (
+          <LoadingCard variant="artwork" count={8} className="grid-mobile xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" />
+        ) : (
+          <ArtworkGrid
+            artworks={artworks}
+            isLoading={isLoading}
+            hasNextPage={!!hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={() => {
+              if (hasNextPage) fetchNextPage()
+            }}
+            onPurchase={handlePurchase}
+            onClearFilters={handleClearFilters}
+            hasFilters={Object.keys(filters).length > 0}
+          />
+        )}
       </div>
     </div>
   )
