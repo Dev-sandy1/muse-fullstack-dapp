@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import express from 'express'
 import mongoose from 'mongoose'
 
+import { database } from '@/config/database'
 import { securityMiddleware } from '@/middleware/security'
 import { requestContext } from '@/middleware/requestContext'
 import { requestLogger } from '@/middleware/requestLogger'
@@ -24,6 +25,7 @@ import jobRoutes from '@/routes/jobs'
 import transactionRoutes from '@/routes/transactions'
 import analyticsRoutes from '@/routes/analytics'
 import fileUploadRoutes from '@/routes/fileUpload'
+import databaseMetricsRoutes from '@/routes/databaseMetrics'
 import healthService from '@/services/healthService'
 import cacheService from '@/services/cacheService'
 import { jobQueueService } from '@/services/jobQueueService'
@@ -132,6 +134,7 @@ export function createApp() {
   app.use('/api/transactions', transactionRoutes)
   app.use('/api/analytics', analyticsRoutes)
   app.use('/api/upload', fileUploadRoutes)
+  app.use('/api/database', databaseMetricsRoutes)
 
   // ── 404 & Global Error Handlers ──────────────────────────────────────────────
   app.use(notFound)
@@ -143,8 +146,8 @@ export function createApp() {
 export const app = createApp()
 
 export async function startServer() {
-  await mongoose.connect(MONGODB_URI)
-  logger.info('Connected to MongoDB')
+  await database.connect()
+  logger.info('Connected to MongoDB with connection pooling')
 
   if (process.env.NODE_ENV !== 'test') {
     try {
@@ -184,9 +187,9 @@ async function shutdown(signal: string) {
   }
 
   try {
-    await mongoose.connection.close()
+    await database.disconnect()
   } catch (error) {
-    logger.warn('MongoDB disconnect encountered an error:', error)
+    logger.warn('Database disconnect encountered an error:', error)
   }
 }
 
