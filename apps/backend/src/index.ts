@@ -34,6 +34,8 @@ import { createLogger } from '@/utils/logger'
 import { websocketService } from '@/services/websocketService'
 import { ensureIndexes } from '@/scripts/ensureIndexes'
 import logsRoute from "./routes/logs";
+import { optionalAuthenticate } from '@/middleware/authMiddleware';
+import { standardLimiter } from '@/middleware/rateLimitMiddleware';
 
 dotenv.config()
 
@@ -122,6 +124,12 @@ export function createApp() {
   })
 
   // ── API Routes ───────────────────────────────────────────────────────────────
+  // Apply optional authentication globally to populate req.user for rate limiting
+  app.use('/api', optionalAuthenticate)
+  
+  // Apply baseline rate limiting to all API endpoints
+  app.use('/api', standardLimiter)
+
   app.use('/api/auth', authRoutes)
   app.use('/api/artworks', artworkRoutes)
   app.use('/api/users', userRoutes)
