@@ -33,6 +33,8 @@ import { jobQueueService } from '@/services/jobQueueService'
 import { createLogger } from '@/utils/logger'
 import { websocketService } from '@/services/websocketService'
 import { ensureIndexes } from '@/scripts/ensureIndexes'
+import { runMigrations } from '@/services/migrationService'
+import adminRoutes from '@/routes/admin'
 import logsRoute from "./routes/logs";
 
 dotenv.config()
@@ -139,6 +141,7 @@ export function createApp() {
   app.use('/api/analytics', analyticsRoutes)
   app.use('/api/upload', fileUploadRoutes)
   app.use('/api/database', databaseMetricsRoutes)
+  app.use('/api/admin', adminRoutes)
 
   // ── 404 & Global Error Handlers ──────────────────────────────────────────────
   app.use(notFound)
@@ -152,6 +155,15 @@ export const app = createApp()
 export async function startServer() {
   await database.connect()
   logger.info('Connected to MongoDB with connection pooling')
+
+  // Run pending database migrations before accepting traffic
+  try {
+    await runMigrations()
+    logger.info('✅ Database migrations completed')
+  } catch (error) {
+    logger.error('❌ Database migrations failed — aborting startup', error)
+    process.exit(1)
+  }
 
   // Ensure database indexes are created
   await ensureIndexes()
