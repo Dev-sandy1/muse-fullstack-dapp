@@ -14,13 +14,12 @@ import {
   authenticate,
   optionalAuthenticate,
 } from "@/middleware/authMiddleware";
-import { standardLimiter } from "@/middleware/rateLimitMiddleware";
 
 const router = Router();
 
 router.get("/:address", optionalAuthenticate, getProfile);
 router.get("/id/:id", getProfileById);
-router.put("/:address", authenticate, standardLimiter, updateProfile);
+router.put("/:address", authenticate, updateProfile);
 router.delete("/:address", authenticate, deleteProfile);
 router.put("/:address/preferences", authenticate, updatePreferences);
 router.get("/:address/activity", getUserActivity);

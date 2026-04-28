@@ -10,6 +10,8 @@ import { requestContext } from '@/middleware/requestContext'
 import { requestLogger } from '@/middleware/requestLogger'
 import { errorHandler } from '@/middleware/errorHandler'
 import { notFound } from '@/middleware/notFound'
+import { deprecationMiddleware, addVersionHeader, API_VERSION } from '@/middleware/deprecation'
+import v1Routes from '@/routes/v1'
 import authRoutes from '@/routes/auth'
 import artworkRoutes from '@/routes/artwork'
 import userRoutes from '@/routes/user'
@@ -36,6 +38,8 @@ import { ensureIndexes } from '@/scripts/ensureIndexes'
 import { runMigrations } from '@/services/migrationService'
 import adminRoutes from '@/routes/admin'
 import logsRoute from "./routes/logs";
+import { optionalAuthenticate } from '@/middleware/authMiddleware';
+import { standardLimiter } from '@/middleware/rateLimitMiddleware';
 
 dotenv.config()
 
@@ -124,6 +128,12 @@ export function createApp() {
   })
 
   // ── API Routes ───────────────────────────────────────────────────────────────
+  // Apply optional authentication globally to populate req.user for rate limiting
+  app.use('/api', optionalAuthenticate)
+  
+  // Apply baseline rate limiting to all API endpoints
+  app.use('/api', standardLimiter)
+
   app.use('/api/auth', authRoutes)
   app.use('/api/artworks', artworkRoutes)
   app.use('/api/users', userRoutes)
@@ -132,14 +142,6 @@ export function createApp() {
   app.use('/api/metadata', metadataRoutes)
   app.use('/api/cache', cacheRoutes)
   app.use('/api/cache', cacheManagementRoutes)
-  app.use('/api/images', imageOptimizerRoutes)
-  app.use('/api/favorites', favoriteRoutes)
-  app.use('/api/keys', apiKeyRoutes)
-  app.use('/api/jobs', jobRoutes)
-  app.use('/api/notifications', notificationRoutes)
-  app.use('/api/transactions', transactionRoutes)
-  app.use('/api/analytics', analyticsRoutes)
-  app.use('/api/upload', fileUploadRoutes)
   app.use('/api/database', databaseMetricsRoutes)
   app.use('/api/admin', adminRoutes)
 
@@ -154,7 +156,8 @@ export const app = createApp()
 
 export async function startServer() {
   await database.connect()
-  logger.info('Connected to MongoDB with connection pooling')
+  if (database.getConnectionStatus()) {
+    logger.info('Connected to MongoDB with connection pooling')
 
   // Run pending database migrations before accepting traffic
   try {
@@ -174,7 +177,7 @@ export async function startServer() {
       await jobQueueService.initialize()
       logger.info('Job queue service initialized')
     } catch (error) {
-      logger.error('Failed to initialize job queue service:', error)
+      logger.warn('Job queue service initialization failed:', error)
     }
   }
 
