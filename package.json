@@ -35,7 +35,9 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.45.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "eslint-plugin-security": "^4.0.0",
+    "eslint-plugin-node-security": "^4.0.4"
   },
   "engines": {
     "node": ">=18.0.0",
