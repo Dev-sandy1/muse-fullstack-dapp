@@ -36,6 +36,8 @@ import { createLogger } from '@/utils/logger'
 import { websocketService } from '@/services/websocketService'
 import { ensureIndexes } from '@/scripts/ensureIndexes'
 import logsRoute from "./routes/logs";
+import { optionalAuthenticate } from '@/middleware/authMiddleware';
+import { standardLimiter } from '@/middleware/rateLimitMiddleware';
 
 dotenv.config()
 
@@ -123,29 +125,19 @@ export function createApp() {
     }
   })
 
-  // ── API Routes - v1 (Current) ───────────────────────────────────────────────
-  app.use('/api/v1', v1Routes)
+  // ── API Routes ───────────────────────────────────────────────────────────────
+  // Apply optional authentication globally to populate req.user for rate limiting
+  app.use('/api', optionalAuthenticate)
+  
+  // Apply baseline rate limiting to all API endpoints
+  app.use('/api', standardLimiter)
 
-  // ── API Routes - Deprecated (Backward Compatibility) ─────────────────────────
-  // These routes are deprecated and will be removed in the future.
-  // Clients should migrate to /api/v1/* endpoints.
-  app.use('/api/auth', deprecationMiddleware, authRoutes)
-  app.use('/api/artworks', deprecationMiddleware, artworkRoutes)
-  app.use('/api/users', deprecationMiddleware, userRoutes)
-  app.use('/api/search', deprecationMiddleware, searchRoutes)
-  app.use('/api/ai', deprecationMiddleware, aiRoutes)
-  app.use('/api/metadata', deprecationMiddleware, metadataRoutes)
-  app.use('/api/images', deprecationMiddleware, imageOptimizerRoutes)
-  app.use('/api/favorites', deprecationMiddleware, favoriteRoutes)
-  app.use('/api/keys', deprecationMiddleware, apiKeyRoutes)
-  app.use('/api/jobs', deprecationMiddleware, jobRoutes)
-  app.use('/api/notifications', deprecationMiddleware, notificationRoutes)
-  app.use('/api/transactions', deprecationMiddleware, transactionRoutes)
-  app.use('/api/analytics', deprecationMiddleware, analyticsRoutes)
-  app.use('/api/upload', deprecationMiddleware, fileUploadRoutes)
-
-  // ── Internal Routes (Not Versioned) ─────────────────────────────────────────
-  // These are internal/admin routes that don't need versioning
+  app.use('/api/auth', authRoutes)
+  app.use('/api/artworks', artworkRoutes)
+  app.use('/api/users', userRoutes)
+  app.use('/api/search', searchRoutes)
+  app.use('/api/ai', aiRoutes)
+  app.use('/api/metadata', metadataRoutes)
   app.use('/api/cache', cacheRoutes)
   app.use('/api/cache', cacheManagementRoutes)
   app.use('/api/database', databaseMetricsRoutes)
