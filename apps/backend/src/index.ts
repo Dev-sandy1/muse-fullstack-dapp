@@ -129,6 +129,9 @@ export function createApp() {
     }
   })
 
+  // ── Swagger Documentation ────────────────────────────────────────────────────
+  setupSwagger(app)
+
   // ── API Routes ───────────────────────────────────────────────────────────────
   // Apply optional authentication globally to populate req.user for rate limiting
   app.use('/api', optionalAuthenticate)
