@@ -10,6 +10,8 @@ import { requestContext } from '@/middleware/requestContext'
 import { requestLogger } from '@/middleware/requestLogger'
 import { errorHandler } from '@/middleware/errorHandler'
 import { notFound } from '@/middleware/notFound'
+import { deprecationMiddleware, addVersionHeader, API_VERSION } from '@/middleware/deprecation'
+import v1Routes from '@/routes/v1'
 import authRoutes from '@/routes/auth'
 import artworkRoutes from '@/routes/artwork'
 import userRoutes from '@/routes/user'
@@ -138,14 +140,6 @@ export function createApp() {
   app.use('/api/metadata', metadataRoutes)
   app.use('/api/cache', cacheRoutes)
   app.use('/api/cache', cacheManagementRoutes)
-  app.use('/api/images', imageOptimizerRoutes)
-  app.use('/api/favorites', favoriteRoutes)
-  app.use('/api/keys', apiKeyRoutes)
-  app.use('/api/jobs', jobRoutes)
-  app.use('/api/notifications', notificationRoutes)
-  app.use('/api/transactions', transactionRoutes)
-  app.use('/api/analytics', analyticsRoutes)
-  app.use('/api/upload', fileUploadRoutes)
   app.use('/api/database', databaseMetricsRoutes)
 
   // ── 404 & Global Error Handlers ──────────────────────────────────────────────
@@ -159,18 +153,25 @@ export const app = createApp()
 
 export async function startServer() {
   await database.connect()
-  logger.info('Connected to MongoDB with connection pooling')
+  if (database.getConnectionStatus()) {
+    logger.info('Connected to MongoDB with connection pooling')
 
-  // Ensure database indexes are created
-  await ensureIndexes()
-  logger.info('🔍 Database indexes verified and created')
+    try {
+      await ensureIndexes()
+      logger.info('Database indexes verified and created')
+    } catch (error) {
+      logger.warn('Could not verify database indexes:', error)
+    }
+  } else {
+    logger.warn('Running without MongoDB connection. Some features may be unavailable.')
+  }
 
   if (process.env.NODE_ENV !== 'test') {
     try {
       await jobQueueService.initialize()
       logger.info('Job queue service initialized')
     } catch (error) {
-      logger.error('Failed to initialize job queue service:', error)
+      logger.warn('Job queue service initialization failed:', error)
     }
   }
 
