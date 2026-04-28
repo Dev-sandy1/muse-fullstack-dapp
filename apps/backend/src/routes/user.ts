@@ -14,6 +14,13 @@ import {
   authenticate,
   optionalAuthenticate,
 } from "@/middleware/authMiddleware";
+import { standardLimiter } from "@/middleware/rateLimitMiddleware";
+import {
+  userProfileCache,
+  userActivityCache,
+  leaderboardCache,
+  invalidateUserCache,
+} from "@/middleware/cacheMiddleware";
 
 const router = Router();
 
