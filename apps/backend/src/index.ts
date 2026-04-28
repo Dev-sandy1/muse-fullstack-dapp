@@ -37,6 +37,7 @@ import { websocketService } from '@/services/websocketService'
 import { ensureIndexes } from '@/scripts/ensureIndexes'
 import { runMigrations } from '@/services/migrationService'
 import adminRoutes from '@/routes/admin'
+import { setupSwagger } from '@/config/swagger'
 import logsRoute from "./routes/logs";
 import { optionalAuthenticate } from '@/middleware/authMiddleware';
 import { standardLimiter } from '@/middleware/rateLimitMiddleware';
@@ -126,6 +127,9 @@ export function createApp() {
       next(error)
     }
   })
+
+  // ── Swagger Documentation ────────────────────────────────────────────────────
+  setupSwagger(app)
 
   // ── API Routes ───────────────────────────────────────────────────────────────
   // Apply optional authentication globally to populate req.user for rate limiting
