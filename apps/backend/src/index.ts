@@ -35,6 +35,8 @@ import { jobQueueService } from '@/services/jobQueueService'
 import { createLogger } from '@/utils/logger'
 import { websocketService } from '@/services/websocketService'
 import { ensureIndexes } from '@/scripts/ensureIndexes'
+import { runMigrations } from '@/services/migrationService'
+import adminRoutes from '@/routes/admin'
 import logsRoute from "./routes/logs";
 import { optionalAuthenticate } from '@/middleware/authMiddleware';
 import { standardLimiter } from '@/middleware/rateLimitMiddleware';
@@ -141,6 +143,7 @@ export function createApp() {
   app.use('/api/cache', cacheRoutes)
   app.use('/api/cache', cacheManagementRoutes)
   app.use('/api/database', databaseMetricsRoutes)
+  app.use('/api/admin', adminRoutes)
 
   // ── 404 & Global Error Handlers ──────────────────────────────────────────────
   app.use(notFound)
@@ -156,15 +159,18 @@ export async function startServer() {
   if (database.getConnectionStatus()) {
     logger.info('Connected to MongoDB with connection pooling')
 
-    try {
-      await ensureIndexes()
-      logger.info('Database indexes verified and created')
-    } catch (error) {
-      logger.warn('Could not verify database indexes:', error)
-    }
-  } else {
-    logger.warn('Running without MongoDB connection. Some features may be unavailable.')
+  // Run pending database migrations before accepting traffic
+  try {
+    await runMigrations()
+    logger.info('✅ Database migrations completed')
+  } catch (error) {
+    logger.error('❌ Database migrations failed — aborting startup', error)
+    process.exit(1)
   }
+
+  // Ensure database indexes are created
+  await ensureIndexes()
+  logger.info('🔍 Database indexes verified and created')
 
   if (process.env.NODE_ENV !== 'test') {
     try {
